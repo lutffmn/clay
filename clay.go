@@ -2,6 +2,7 @@ package clay
 
 import (
 	"fmt"
+	"os"
 )
 
 type App struct {
@@ -13,8 +14,7 @@ type App struct {
 }
 
 type Action struct {
-	handler       func()
-	isRequiredArg bool
+	handler interface{}
 }
 
 type Feature map[string]Action
@@ -31,32 +31,45 @@ func New(name, description, usage, version string) *App {
 }
 
 // This is for short flag. -> "-h", "-v"
-func (a *App) Short(flag string, handler func(), isRequiredArg bool) {
+func (a *App) Short(flag string, handler interface{}) {
 	if flag == "" {
 		return
 	}
 	flag = fmt.Sprintf("-%s", flag)
 	action := Action{
-		handler:       handler,
-		isRequiredArg: isRequiredArg,
+		handler: handler,
 	}
 	a.feature[flag] = action
 }
 
 // This is for long flag. -> "--help", "--version"
-func (a *App) Long(flag string, handler func(), isRequiredArg bool) {
+func (a *App) Long(flag string, handler interface{}) {
 	if flag == "" {
 		return
 	}
 	flag = fmt.Sprintf("--%s", flag)
 	action := Action{
-		handler:       handler,
-		isRequiredArg: isRequiredArg,
+		handler: handler,
 	}
 	a.feature[flag] = action
 }
 
 // This is for parsing arguments
 func (a *App) Parse() {
-	// TODO: parsing arguments, and run the action handler
+	for i := 1; i < len(os.Args[1:]); i++ {
+		flag := os.Args[i]
+		feature, ok := a.feature[flag]
+		if !ok {
+			continue
+		}
+
+		switch h := feature.handler.(type) {
+		case func():
+			h()
+		case func(string):
+			h(os.Args[i+1])
+		default:
+			panic("Invalid Action handler")
+		}
+	}
 }

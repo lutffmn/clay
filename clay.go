@@ -69,7 +69,7 @@ func (a *App) Parse() {
 		case func(string):
 			h(os.Args[i+1])
 		default:
-			panic("Invalid Action handler")
+			return
 		}
 	}
 }
